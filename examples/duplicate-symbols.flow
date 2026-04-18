@@ -1,0 +1,30 @@
+// This file demonstrates the duplicate symbol detection feature
+
+flow "duplicate_demo" {
+  input {
+    ticket_text: string
+    category: string
+    category: string  // ❌ ERROR: duplicate input field
+  }
+
+  llm classify {
+    prompt: "Classify the support ticket."
+    output_schema: {
+      issue_type: string
+      confidence: number
+    }
+  }
+
+  // ❌ ERROR: duplicate llm block name
+  llm classify {
+    prompt: "Alternative classifier."
+    output_schema: {
+      result: string
+    }
+  }
+
+  output {
+    routed: true
+    routed: false  // ❌ ERROR: duplicate output field
+  }
+}

@@ -110,6 +110,61 @@ class ValidationTests(unittest.TestCase):
         diagnostics = validate_flow(flow, source)
         self.assertTrue(any(d.code == "E_VAL_ROUTE_DUP_KEY" for d in diagnostics))
 
+    def test_validation_duplicate_llm_block(self) -> None:
+        source = textwrap.dedent(
+            """
+            flow "x" {
+              input {
+                ticket_text: string
+              }
+              llm classify {
+                prompt: "Classify: {ticket_text}"
+                output_schema: { issue_type: string }
+              }
+              llm classify {
+                prompt: "Another classifier"
+                output_schema: { result: string }
+              }
+            }
+            """
+        ).strip()
+        flow = parse_source(source)
+        diagnostics = validate_flow(flow, source)
+        self.assertTrue(any(d.code == "E_VAL_DUP_SYMBOL" for d in diagnostics))
+
+    def test_validation_duplicate_input_field(self) -> None:
+        source = textwrap.dedent(
+            """
+            flow "x" {
+              input {
+                ticket_text: string
+                ticket_text: string
+              }
+            }
+            """
+        ).strip()
+        flow = parse_source(source)
+        diagnostics = validate_flow(flow, source)
+        self.assertTrue(any(d.code == "E_VAL_DUP_INPUT_FIELD" for d in diagnostics))
+
+    def test_validation_duplicate_output_field(self) -> None:
+        source = textwrap.dedent(
+            """
+            flow "x" {
+              input {
+                value: string
+              }
+              output {
+                result: value
+                result: value
+              }
+            }
+            """
+        ).strip()
+        flow = parse_source(source)
+        diagnostics = validate_flow(flow, source)
+        self.assertTrue(any(d.code == "E_VAL_DUP_OUTPUT_FIELD" for d in diagnostics))
+
 
 class CliTests(unittest.TestCase):
     def test_cli_parse_success(self) -> None:

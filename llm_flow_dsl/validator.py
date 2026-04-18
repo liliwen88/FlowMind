@@ -23,6 +23,7 @@ def validate_flow(flow: FlowNode, source: str) -> List[Diagnostic]:
     diagnostics: List[Diagnostic] = []
     scalar_symbols: Set[str] = set()
     object_symbols: Dict[str, Set[str]] = {}
+    symbol_definitions: Dict[str, Tuple[str, Span]] = {}  # symbol -> (kind, first_span)
 
     for block in flow.blocks:
         _validate_statement(
@@ -31,6 +32,7 @@ def validate_flow(flow: FlowNode, source: str) -> List[Diagnostic]:
             diagnostics=diagnostics,
             scalar_symbols=scalar_symbols,
             object_symbols=object_symbols,
+            symbol_definitions=symbol_definitions,
         )
     return diagnostics
 
@@ -41,13 +43,46 @@ def _validate_statement(
     diagnostics: List[Diagnostic],
     scalar_symbols: Set[str],
     object_symbols: Dict[str, Set[str]],
+    symbol_definitions: Optional[Dict[str, Tuple[str, Span]]] = None,
 ) -> None:
+    if symbol_definitions is None:
+        symbol_definitions = {}
+
     if isinstance(node, InputBlock):
+        seen_fields: Dict[str, Span] = {}
         for field in node.fields:
+            # Check for duplicate fields within input block
+            if field.name in seen_fields:
+                diagnostics.append(
+                    make_diagnostic(
+                        code="E_VAL_DUP_INPUT_FIELD",
+                        message="duplicate input field '{0}'".format(field.name),
+                        severity="error",
+                        span=field.span,
+                        source_lines=lines,
+                    )
+                )
+            else:
+                seen_fields[field.name] = field.span
             scalar_symbols.add(field.name)
         return
 
     if isinstance(node, LlmBlock):
+        # Check for duplicate llm block names
+        if node.name in symbol_definitions:
+            kind, first_span = symbol_definitions[node.name]
+            diagnostics.append(
+                make_diagnostic(
+                    code="E_VAL_DUP_SYMBOL",
+                    message="duplicate symbol '{0}' (already defined as {1})".format(node.name, kind),
+                    severity="error",
+                    span=node.span,
+                    source_lines=lines,
+                )
+            )
+        else:
+            symbol_definitions[node.name] = ("llm block", node.span)
+
         prompt = node.properties.get("prompt")
         if not isinstance(prompt, str):
             diagnostics.append(
@@ -89,6 +124,7 @@ def _validate_statement(
                 diagnostics=diagnostics,
                 scalar_symbols=scalar_symbols,
                 object_symbols=object_symbols,
+                symbol_definitions=symbol_definitions,
             )
         for stmt in node.else_body:
             _validate_statement(
@@ -97,6 +133,7 @@ def _validate_statement(
                 diagnostics=diagnostics,
                 scalar_symbols=scalar_symbols,
                 object_symbols=object_symbols,
+                symbol_definitions=symbol_definitions,
             )
         return
 
@@ -127,6 +164,7 @@ def _validate_statement(
                 diagnostics=diagnostics,
                 scalar_symbols=scalar_symbols,
                 object_symbols=object_symbols,
+                symbol_definitions=symbol_definitions,
             )
         if node.default_action is not None:
             _validate_statement(
@@ -135,6 +173,7 @@ def _validate_statement(
                 diagnostics=diagnostics,
                 scalar_symbols=scalar_symbols,
                 object_symbols=object_symbols,
+                symbol_definitions=symbol_definitions,
             )
         return
 
@@ -165,7 +204,21 @@ def _validate_statement(
         return
 
     if isinstance(node, OutputBlock):
+        seen_fields: Dict[str, Span] = {}
         for field in node.fields:
+            # Check for duplicate fields within output block
+            if field.name in seen_fields:
+                diagnostics.append(
+                    make_diagnostic(
+                        code="E_VAL_DUP_OUTPUT_FIELD",
+                        message="duplicate output field '{0}'".format(field.name),
+                        severity="error",
+                        span=field.span,
+                        source_lines=lines,
+                    )
+                )
+            else:
+                seen_fields[field.name] = field.span
             _validate_expression(
                 field.value,
                 lines=lines,
