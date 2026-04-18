@@ -1,5 +1,6 @@
-﻿# llm-flow-dsl
-
+﻿
+Languages: [English](#llm-flow-dsl) | [中文](#中文简介) | [日本語](#日本語概要)
+# llm-flow-dsl
 AI + Business DSL as an AI rules engine.
 
 AI + Business DSL for production workflows.
@@ -92,9 +93,42 @@ llm-flow-dsl/
 ## Quick start (placeholder)
 
 ```bash
-# coming soon
+python -m llm_flow_dsl parse examples/support-triage.flow --pretty
+python -m llm_flow_dsl run examples/support-triage.flow --input-json input.json --dry-run --pretty
 ```
+
+Grammar reference: `docs/grammar-spec.md`
 
 ## Contributing
 
 PRs and design feedback are welcome. Early contributors will shape the DSL grammar.
+
+## 中文简介
+
+`llm-flow-dsl` 是一个面向生产环境的 **AI 规则引擎**。  
+你可以用简洁、可读的 DSL，把 LLM 决策、业务约束、审批、重试和工具调用统一编排在同一条流程里。
+
+核心目标：
+
+- 让产品、运营也能读懂并参与规则设计
+- 让工程团队可以版本化、测试化、可审计地发布 AI 流程
+- 用确定性的业务规则约束模型输出，提升稳定性与可控性
+
+一句话：
+
+> 用业务级决策流程代码，交付可靠的 AI 功能。
+
+## 日本語概要
+
+`llm-flow-dsl` は、本番運用向けの **AI ルールエンジン** です。  
+読みやすい小さな DSL で、LLM の判断、業務制約、承認、リトライ、ツール呼び出しを 1 つのフローとして記述できます。
+
+主な狙い：
+
+- プロダクト/オペレーション担当でもルールを理解・編集しやすい
+- エンジニアがバージョン管理・テスト・監査可能な形で運用できる
+- モデル出力だけに依存せず、決定論的な業務ルールで制御できる
+
+一言で言うと：
+
+> ビジネス品質の意思決定フローをコード化し、信頼できる AI 機能を提供する。
