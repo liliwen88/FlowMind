@@ -1,0 +1,35 @@
+flow "support_triage_v1" {
+  input {
+    ticket_text: string
+    customer_tier: string
+    region: string
+  }
+
+  llm classify_intent {
+    prompt: "Classify issue type and urgency from ticket_text."
+    output_schema: {
+      issue_type: string
+      urgency: string
+      confidence: number
+    }
+  }
+
+  if classify_intent.confidence < 0.7 {
+    approval "human_review"
+  } else {
+    route on classify_intent.issue_type {
+      "billing" -> tool "queue_billing"
+      "technical" -> tool "queue_tech"
+      default -> tool "queue_general"
+    }
+  }
+
+  if customer_tier == "enterprise" and classify_intent.urgency == "high" {
+    tool "escalate_priority"
+  }
+
+  output {
+    routed: true
+  }
+}
+
