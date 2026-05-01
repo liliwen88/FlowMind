@@ -4,7 +4,7 @@
 
 **Do not open public GitHub issues for security vulnerabilities.**
 
-If you discover a security vulnerability in llm-flow-dsl, please report it via email to **liliwen@example.com** (replace with your actual contact).
+If you discover a security vulnerability in llm-flow-dsl, please report it via email to **liwenli204@gmail.com** (replace with your actual contact).
 
 When reporting, please include:
 
