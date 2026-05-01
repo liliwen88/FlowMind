@@ -1,0 +1,43 @@
+// Policy gating example:
+// - Demonstrates `in` / `not in` comparisons
+// - Routes to tools vs approvals depending on region/model policy
+
+flow "policy_gating_v1" {
+  input {
+    user_region: string
+    content: string
+    requested_action: string
+  }
+
+  llm moderate {
+    prompt: "Check if content is allowed and label the category."
+    output_schema: {
+      allowed: boolean
+      category: string
+      confidence: number
+    }
+  }
+
+  if user_region in "US" {
+    // Intentionally simple: single-region allowlist check in MVP grammar
+    tool "region_us_pipeline"
+  } else {
+    tool "region_global_pipeline"
+  }
+
+  if requested_action == "publish" and moderate.allowed == false {
+    approval "policy_exception_approval"
+  } else {
+    route on moderate.category {
+      "self_harm" -> approval "safety_review"
+      "spam" -> tool "auto_reject"
+      default -> tool "auto_allow"
+    }
+  }
+
+  output {
+    allowed: moderate.allowed
+    category: moderate.category
+  }
+}
+

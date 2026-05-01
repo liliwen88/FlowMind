@@ -1,0 +1,42 @@
+// Refund triage example:
+// - Uses llm classification + risk gating
+// - Demonstrates approval + tool blocks + expressions with member access
+
+flow "refund_approval_v1" {
+  input {
+    order_id: string
+    customer_message: string
+    amount_usd: number
+    customer_tier: string
+  }
+
+  llm classify_refund {
+    prompt: "Decide if customer_message is a refund request and estimate fraud risk."
+    output_schema: {
+      is_refund_request: boolean
+      fraud_risk: string
+      confidence: number
+    }
+  }
+
+  if classify_refund.confidence < 0.8 {
+    approval "human_refund_review"
+  } else {
+    if amount_usd > 200 or classify_refund.fraud_risk == "high" {
+      approval "refund_high_risk_approval"
+    } else {
+      tool "issue_refund"
+    }
+  }
+
+  if customer_tier == "enterprise" and classify_refund.is_refund_request == true {
+    tool "notify_account_manager"
+  }
+
+  output {
+    order_id: order_id
+    refund_request: classify_refund.is_refund_request
+    routed_to_human: classify_refund.confidence < 0.8 or amount_usd > 200
+  }
+}
+
