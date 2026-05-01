@@ -1,0 +1,37 @@
+// A/B routing example:
+// - Demonstrates `not in` + route-on expression
+// - Uses tools for deterministic branches and an approval fallback
+
+flow "ab_routing_v1" {
+  input {
+    user_id: string
+    experiment_bucket: string
+    query: string
+  }
+
+  // Guardrail: only allow known buckets to hit the LLM
+  if experiment_bucket not in "AB" {
+    approval "unknown_bucket_review"
+  } else {
+    llm answer {
+      prompt: "Answer the user's query concisely."
+      output_schema: {
+        answer_text: string
+        confidence: number
+      }
+    }
+
+    route on experiment_bucket {
+      "A" -> tool "log_bucket_a"
+      "B" -> tool "log_bucket_b"
+      default -> approval "bucket_fallback_review"
+    }
+
+    output {
+      bucket: experiment_bucket
+      answer: answer.answer_text
+      confidence: answer.confidence
+    }
+  }
+}
+
