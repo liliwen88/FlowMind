@@ -1,0 +1,114 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2026 liliwen88 <your-email@example.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. DEFINITIONS.
+
+"This License" refers to version 3 of the GNU Affero General Public License.
+
+"The Program" refers to any copyrightable work licensed under this License.
+
+"You" refers to each licensee; "Your" refers to the collective rights of all licensees.
+
+"Contributor" means any entity that creates, modifies, or distributes under this License.
+
+"Covered Work" means either the Program or any derivative work under this License.
+
+"Network Server" means a server accessible to the public that offers interactive services.
+
+2. ADDITIONAL TERMS FOR NETWORK INTERACTION.
+
+If the Program offers interaction through a computer network, you must ensure that
+users interacting with the Program through that network can receive a copy of the
+source code. This applies even if you are using it as a service provider.
+
+Specifically, if you modify the Program and allow others to access it over a network:
+- You must provide access to the Corresponding Source code
+- Users must be able to obtain the source code from your server
+
+3. AFFERO NETWORKS (Network Copyleft).
+
+If you deploy this as a network service (SaaS, API service, web application):
+- The modified version must be licensed under AGPL v3
+- Users of the service must be able to download the source code
+- You must provide clear means to obtain the source code
+
+4. COMMERCIAL USE.
+
+For commercial use (including but not limited to):
+- SaaS platforms using this code
+- Closed-source products incorporating this code
+- Products sold or licensed for profit
+- Internal business applications for enterprises
+
+You must obtain a separate commercial license from the copyright holder.
+Contact: commercial@llm-flow-dsl.com
+
+Without a commercial license, derivative works must be licensed under AGPL v3
+and all source code must be made available to users.
+
+5. PERMITTED USES (WITHOUT COMMERCIAL LICENSE).
+
+Under AGPL v3, you may:
+- Use the software for learning, research, and development
+- Modify the software for your own needs
+- Distribute modified versions, provided all source code is available
+- Use in non-profit organizations and educational settings
+- Contribute improvements back to the community
+
+6. DISTRIBUTION REQUIREMENTS.
+
+If you distribute the Program or Covered Works:
+- Include a notice stating the Program is covered by AGPL v3
+- Include a copy of this License
+- Provide a way to obtain the source code
+- Include a copy of any changes you made
+- Maintain the copyright notice and license text
+
+7. DERIVATIVE WORKS.
+
+Any Covered Work is automatically licensed under AGPL v3. This means:
+- You cannot relicense it under MIT, Apache 2.0, or proprietary licenses
+- You must make source code available to users
+- You must provide means for users to obtain updates
+
+8. DISCLAIMER OF WARRANTY.
+
+THE PROGRAM IS PROVIDED WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+9. LIMITATION OF LIABILITY.
+
+IN NO EVENT SHALL ANY COPYRIGHT HOLDER BE LIABLE FOR ANY DAMAGES,
+INCLUDING BUT NOT LIMITED TO SPECIAL, INDIRECT, CONSEQUENTIAL,
+OR PUNITIVE DAMAGES ARISING OUT OF THE USE OF THE PROGRAM.
+
+10. HOW TO APPLY THIS LICENSE.
+
+To apply this License to your program, add:
+
+    Copyright (C) 2026 liliwen88
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; see AGPL v3 for details.
+
+For more information about AGPL v3, visit: https://www.gnu.org/licenses/agpl-3.0.html

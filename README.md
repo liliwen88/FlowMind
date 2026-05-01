@@ -101,7 +101,39 @@ Grammar reference: `docs/grammar-spec.md`
 
 ## Contributing
 
-PRs and design feedback are welcome. Early contributors will shape the DSL grammar.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development setup
+- How to submit pull requests
+- Code of Conduct
+
+Early contributors will shape the DSL grammar and roadmap.
+
+## License
+
+llm-flow-dsl is released under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+This means you can:
+- ✅ Use it freely in commercial projects
+- ✅ Modify and distribute the code
+- ✅ Use it without asking permission
+
+With the condition that you:
+- ⚠️ Include the original copyright notice
+
+## Security
+
+Found a security vulnerability? Please report it responsibly:
+📧 See [SECURITY.md](SECURITY.md) for details.
+
+## Support
+
+- 📖 [Documentation](docs/)
+- 🐛 [Report Issues](https://github.com/liliwen88/llm-flow-dsl/issues)
+- 💬 [Discussions](https://github.com/liliwen88/llm-flow-dsl/discussions)
+
+---
+
+**Built with ❤️ by the llm-flow-dsl community**
 
 ## 中文简介
 
