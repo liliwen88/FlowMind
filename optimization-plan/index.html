@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>llm-flow-dsl 优化方案</title>
+    <meta name="description" content="llm-flow-dsl 项目全面优化方案 - 代码质量、性能优化、测试覆盖和用户体验提升计划">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: hsl(221, 83%, 53%);
+            --primary-light: hsl(221, 83%, 63%);
+            --success: hsl(142, 76%, 36%);
+            --warning: hsl(38, 92%, 50%);
+            --destructive: hsl(0, 84%, 60%);
+            --background: hsl(210, 40%, 98%);
+            --card: hsl(0, 0%, 100%);
+            --foreground: hsl(222, 84%, 4.9%);
+            --muted: hsl(210, 40%, 96%);
+            --border: hsl(214, 32%, 91%);
+            --radius: 0.75rem;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 4rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--foreground);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: var(--muted);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), #3b82f6, #8b5cf6);
+            color: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M0 0h40v40H0z'/%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card-desc {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        /* Priority Cards */
+        .priority-section {
+            margin: 2rem 0;
+        }
+
+        .priority-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .priority-card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .priority-header {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .priority-header:hover {
+            background: var(--muted);
+        }
+
+        .priority-header.high {
+            border-left: 4px solid var(--destructive);
+        }
+
+        .priority-header.medium {
+            border-left: 4px solid var(--warning);
+        }
+
+        .priority-header.low {
+            border-left: 4px solid var(--primary);
+        }
+
+        .priority-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .priority-count {
+            background: var(--muted);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .priority-content {
+            padding: 0 1.5rem 1.5rem;
+            display: none;
+        }
+
+        .priority-content.expanded {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Optimization Item */
+        .opt-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: var(--card);
+            transition: box-shadow 0.2s;
+        }
+
+        .opt-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .opt-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .opt-item-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .opt-item-desc {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-low {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .badge-outline {
+            border: 1px solid var(--border);
+            background: transparent;
+        }
+
+        .opt-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .opt-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .opt-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+
+        .opt-details.expanded {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .benefits-list, .steps-list {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .benefits-list li, .steps-list li {
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .benefits-list li::before {
+            content: '•';
+            color: var(--success);
+            margin-right: 0.5rem;
+        }
+
+        .steps-list li::before {
+            content: attr(data-num) '.';
+            color: var(--primary);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--foreground);
+        }
+
+        .btn-outline:hover {
+            background: var(--muted);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--muted);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease-out;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Bar Chart */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 200px;
+            padding: 1rem 0;
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bar {
+            width: 100%;
+            max-width: 60px;
+            border-radius: 0.25rem 0.25rem 0 0;
+            transition: all 0.3s;
+        }
+
+        .bar-current {
+            background: var(--primary);
+        }
+
+        .bar-target {
+            background: var(--success);
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .bar-value {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Module Coverage */
+        .module-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .module-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .module-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .module-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .missing-tests {
+            margin-top: 1rem;
+        }
+
+        .missing-test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: var(--muted);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            background: var(--muted);
+            margin-top: 3rem;
+            padding: 2rem 0;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 2rem;
+            }
+
+            .hero h2 {
+                font-size: 1.5rem;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Icon */
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-icon">DSL</div>
+                <div class="logo-text">
+                    <h1>llm-flow-dsl</h1>
+                    <p>优化方案 v0.1</p>
+                </div>
+            </div>
+            <nav>
+                <button class="nav-btn active" onclick="showTab('overview')">总览</button>
+                <button class="nav-btn" onclick="showTab('priority')">优先级矩阵</button>
+                <button class="nav-btn" onclick="showTab('quality')">代码质量</button>
+                <button class="nav-btn" onclick="showTab('testing')">测试覆盖</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <!-- Hero Section -->
+            <div class="hero">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span>⭐</span>
+                        <span>综合评分: 4.0/5.0</span>
+                    </div>
+                    <h2>项目优化方案</h2>
+                    <p>全面的代码质量提升、性能优化和用户体验改进计划，助力 llm-flow-dsl 从 MVP 迈向生产就绪</p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span>✓</span>
+                            <span>11 项优化任务</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>⏱</span>
+                            <span>预计 40+ 小时工作量</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>🎯</span>
+                            <span>目标: v0.2 发布</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">代码行数</span>
+                        <span>📊</span>
+                    </div>
+                    <div class="stat-card-value">1,825</div>
+                    <div class="stat-card-desc">核心模块</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">模块数量</span>
+                        <span>📦</span>
+                    </div>
+                    <div class="stat-card-value">9</div>
+                    <div class="stat-card-desc">核心功能模块</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">测试文件</span>
+                        <span>🧪</span>
+                    </div>
+                    <div class="stat-card-value">1</div>
+                    <div class="stat-card-desc">需要扩展</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">示例文件</span>
+                        <span>📄</span>
+                    </div>
+                    <div class="stat-card-value">5</div>
+                    <div class="stat-card-desc">参考实现</div>
+                </div>
+            </div>
+
+            <!-- Priority Breakdown -->
+            <div class="stats-grid">
+                <div class="priority-card">
+                    <div class="priority-header high">
+                        <div class="priority-title">
+                            🔴 高优先级
+                            <span class="priority-count">4 项</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6b7280;">完成度: 0/4</p>
+                    </div>
+                </div>
+                <div class="priority-card">
+                    <div class="priority-header medium">
+                        <div class="priority-title">
+                            🟡 中优先级
+                            <span class="priority-count">4 项</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6b7280;">完成度: 0/4</p>
+                    </div>
+                </div>
+                <div class="priority-card">
+                    <div class="priority-header low">
+                        <div class="priority-title">
+                            🔵 低优先级
+                            <span class="priority-count">3 项</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6b7280;">完成度: 0/3</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Quality Preview -->
+            <div class="chart-container">
+                <h3 class="chart-title">📈 代码质量指标</h3>
+                <p class="chart-subtitle">当前状态与目标对比</p>
+                <div class="bar-chart">
+                    <div class="bar-group">
+                        <div class="bar-value">65%</div>
+                        <div class="bar bar-current" style="height: 65%;"></div>
+                        <div class="bar-label">测试覆盖率</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar-value">85%</div>
+                        <div class="bar bar-current" style="height: 85%;"></div>
+                        <div class="bar-label">类型标注率</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar-value">15%</div>
+                        <div class="bar bar-current" style="height: 15%;"></div>
+                        <div class="bar-label">文档覆盖率</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Matrix Tab -->
+        <div id="priority" class="tab-content">
+            <div style="text-align: center; margin: 2rem 0;">
+                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">优化任务优先级矩阵</h2>
+                <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">
+                    根据影响程度和实施难度，将优化任务分为三个优先级层次，帮助团队合理分配资源
+                </p>
+            </div>
+
+            <!-- High Priority -->
+            <div class="priority-section">
+                <div class="priority-card">
+                    <div class="priority-header high" onclick="togglePriority(this)">
+                        <div class="priority-title">
+                            <div style="width: 2.5rem; height: 2.5rem; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                ⚠️
+                            </div>
+                            🔴 高优先级 - 立即处理
+                            <span class="priority-count">4 项任务</span>
+                        </div>
+                        <span>▼</span>
+                    </div>
+                    <div class="priority-content expanded">
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">添加依赖管理文件</div>
+                                    <div class="opt-item-desc">创建 pyproject.toml 或 requirements.txt，明确项目依赖</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-high">高</span>
+                                        <span class="badge badge-outline">工程化</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 30分钟</div>
+                                <div class="opt-meta-item">● 影响: 高</div>
+                                <div class="opt-meta-item">▲ 难度: 简单</div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="toggleDetails(this)">查看详情 ▼</button>
+                            <div class="opt-details">
+                                <div>
+                                    <h5 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">预期收益</h5>
+                                    <ul class="benefits-list">
+                                        <li>明确的依赖版本控制</li>
+                                        <li>简化安装流程</li>
+                                        <li>支持自动化构建</li>
+                                        <li>团队协作一致性</li>
+                                    </ul>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <h5 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">实施步骤</h5>
+                                    <ol class="steps-list">
+                                        <li data-num="1">创建 pyproject.toml 定义项目元数据</li>
+                                        <li data-num="2">声明 pytest>=7.0 等开发依赖</li>
+                                        <li data-num="3">配置 black、flake8、mypy 工具</li>
+                                        <li data-num="4">添加 README 中的安装说明</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">添加 CI/CD 配置</div>
+                                    <div class="opt-item-desc">配置 GitHub Actions 自动测试和代码质量检查</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-high">高</span>
+                                        <span class="badge badge-outline">工程化</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 2小时</div>
+                                <div class="opt-meta-item">● 影响: 高</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="toggleDetails(this)">查看详情 ▼</button>
+                            <div class="opt-details">
+                                <div>
+                                    <h5 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">预期收益</h5>
+                                    <ul class="benefits-list">
+                                        <li>自动化测试执行</li>
+                                        <li>代码覆盖率报告</li>
+                                        <li>Linting 自动检查</li>
+                                        <li>防止回归问题</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">添加递归深度保护</div>
+                                    <div class="opt-item-desc">在 Pratt 解析器中添加递归深度限制，防止栈溢出</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-high">高</span>
+                                        <span class="badge badge-outline">性能与安全</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 1小时</div>
+                                <div class="opt-meta-item">● 影响: 高</div>
+                                <div class="opt-meta-item">▲ 难度: 简单</div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="toggleDetails(this)">查看详情 ▼</button>
+                            <div class="opt-details">
+                                <div>
+                                    <h5 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">预期收益</h5>
+                                    <ul class="benefits-list">
+                                        <li>防止恶意输入导致崩溃</li>
+                                        <li>提高系统稳定性</li>
+                                        <li>更好的错误提示</li>
+                                        <li>生产环境安全性</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">补充关键测试</div>
+                                    <div class="opt-item-desc">填补边界条件、集成测试和所有示例文件的测试覆盖</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-high">高</span>
+                                        <span class="badge badge-outline">测试</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 4小时</div>
+                                <div class="opt-meta-item">● 影响: 高</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="toggleDetails(this)">查看详情 ▼</button>
+                            <div class="opt-details">
+                                <div>
+                                    <h5 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">预期收益</h5>
+                                    <ul class="benefits-list">
+                                        <li>提高代码可靠性</li>
+                                        <li>发现潜在 bug</li>
+                                        <li>支持安全重构</li>
+                                        <li>提升用户信心</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medium Priority -->
+                <div class="priority-card">
+                    <div class="priority-header medium" onclick="togglePriority(this)">
+                        <div class="priority-title">
+                            <div style="width: 2.5rem; height: 2.5rem; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                ⏱
+                            </div>
+                            🟡 中优先级 - 近期处理
+                            <span class="priority-count">4 项任务</span>
+                        </div>
+                        <span>▼</span>
+                    </div>
+                    <div class="priority-content">
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">添加 docstrings</div>
+                                    <div class="opt-item-desc">为所有公共 API 添加详细的文档字符串</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-medium">中</span>
+                                        <span class="badge badge-outline">文档</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 6小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                        </div>
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">添加 linting 和 type checking</div>
+                                    <div class="opt-item-desc">配置 mypy、flake8、black 等代码质量工具</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-medium">中</span>
+                                        <span class="badge badge-outline">工程化</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 3小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                        </div>
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">优化错误提示</div>
+                                    <div class="opt-item-desc">改进 CLI 错误输出格式，提供更友好的用户体验</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-medium">中</span>
+                                        <span class="badge badge-outline">用户体验</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 3小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                        </div>
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">性能基准测试</div>
+                                    <div class="opt-item-desc">建立性能基准并监控回归</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-medium">中</span>
+                                        <span class="badge badge-outline">性能</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 4小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 中等</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Priority -->
+                <div class="priority-card">
+                    <div class="priority-header low" onclick="togglePriority(this)">
+                        <div class="priority-title">
+                            <div style="width: 2.5rem; height: 2.5rem; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                ✓
+                            </div>
+                            🔵 低优先级 - 长期规划
+                            <span class="priority-count">3 项任务</span>
+                        </div>
+                        <span>▼</span>
+                    </div>
+                    <div class="priority-content">
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">交互式 REPL 模式</div>
+                                    <div class="opt-item-desc">添加命令行交互模式实时测试 flow 语法</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-low">低</span>
+                                        <span class="badge badge-outline">用户体验</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 8小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 困难</div>
+                            </div>
+                        </div>
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">Flow 可视化</div>
+                                    <div class="opt-item-desc">生成流程图（DOT/Mermaid 格式）和执行轨迹</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-low">低</span>
+                                        <span class="badge badge-outline">工具</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 10小时</div>
+                                <div class="opt-meta-item">● 影响: 中</div>
+                                <div class="opt-meta-item">▲ 难度: 困难</div>
+                            </div>
+                        </div>
+                        <div class="opt-item">
+                            <div class="opt-item-header">
+                                <div>
+                                    <div class="opt-item-title">DSL 语法增强</div>
+                                    <div class="opt-item-desc">添加导入/复用机制、内置函数库和类型系统增强</div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span class="badge badge-low">低</span>
+                                        <span class="badge badge-outline">语言特性</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="opt-meta">
+                                <div class="opt-meta-item">⏱ 16小时</div>
+                                <div class="opt-meta-item">● 影响: 高</div>
+                                <div class="opt-meta-item">▲ 难度: 困难</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Quality Tab -->
+        <div id="quality" class="tab-content">
+            <div style="text-align: center; margin: 2rem 0;">
+                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">代码质量分析</h2>
+                <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">
+                    全面评估当前代码质量状况，识别改进空间，制定提升目标
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">测试覆盖率</span>
+                        <span>✓</span>
+                    </div>
+                    <div class="stat-card-value">65%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 72%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280;">
+                        <span>目标: 90%</span>
+                        <span class="badge badge-medium">72%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">类型标注率</span>
+                        <span>🛡</span>
+                    </div>
+                    <div class="stat-card-value">85%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280;">
+                        <span>目标: 100%</span>
+                        <span class="badge badge-high">85%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">文档覆盖率</span>
+                        <span>📄</span>
+                    </div>
+                    <div class="stat-card-value">15%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 19%; background: var(--destructive);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280;">
+                        <span>目标: 80%</span>
+                        <span class="badge badge-high" style="background: #fee2e2; color: #dc2626;">19%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">代码复杂度</span>
+                        <span>⚠</span>
+                    </div>
+                    <div class="stat-card-value">12分</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 67%; background: var(--warning);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280;">
+                        <span>目标: 8分</span>
+                        <span class="badge badge-medium">67%</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">重复代码率</span>
+                        <span>🔁</span>
+                    </div>
+                    <div class="stat-card-value">8%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 38%; background: var(--warning);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280;">
+                        <span>目标: 3%</span>
+                        <span class="badge badge-medium">38%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Bottlenecks -->
+            <div class="chart-container">
+                <h3 class="chart-title">⚠️ 性能瓶颈分析</h3>
+                <p class="chart-subtitle">识别并优化关键性能问题</p>
+                <div style="space-y: 1rem;">
+                    <div class="module-card">
+                        <div class="module-header">
+                            <div>
+                                <h4 style="font-weight: 600; margin-bottom: 0.25rem;">递归深度问题</h4>
+                                <p style="font-size: 0.875rem; color: #6b7280;">parser.py::_parse_expression()</p>
+                            </div>
+                            <span class="badge badge-high">严重</span>
+                        </div>
+                        <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">深层嵌套表达式可能导致栈溢出</p>
+                        <div style="background: var(--muted); padding: 0.75rem; border-radius: 0.5rem;">
+                            <p style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">解决方案:</p>
+                            <p style="font-size: 0.875rem; color: #6b7280;">添加递归深度限制或转换为迭代实现</p>
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--success);">
+                            预期改进: 消除崩溃风险
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-header">
+                            <div>
+                                <h4 style="font-weight: 600; margin-bottom: 0.25rem;">copy.deepcopy 开销</h4>
+                                <p style="font-size: 0.875rem; color: #6b7280;">runner.py::run_flow()</p>
+                            </div>
+                            <span class="badge badge-medium">中等</span>
+                        </div>
+                        <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">大型状态对象拷贝性能差</p>
+                        <div style="background: var(--muted); padding: 0.75rem; border-radius: 0.5rem;">
+                            <p style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">解决方案:</p>
+                            <p style="font-size: 0.875rem; color: #6b7280;">使用浅拷贝或不可变数据结构</p>
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--success);">
+                            预期改进: 30-50% 性能提升
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-header">
+                            <div>
+                                <h4 style="font-weight: 600; margin-bottom: 0.25rem;">线性搜索符号表</h4>
+                                <p style="font-size: 0.875rem; color: #6b7280;">validator.py</p>
+                            </div>
+                            <span class="badge badge-low">轻微</span>
+                        </div>
+                        <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">大型 flow 文件查找效率低</p>
+                        <div style="background: var(--muted); padding: 0.75rem; border-radius: 0.5rem;">
+                            <p style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">解决方案:</p>
+                            <p style="font-size: 0.875rem; color: #6b7280;">使用集合或字典优化查找</p>
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--success);">
+                            预期改进: O(n) → O(1)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Tab -->
+        <div id="testing" class="tab-content">
+            <div style="text-align: center; margin: 2rem 0;">
+                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">测试覆盖率分析</h2>
+                <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">
+                    详细分析各模块测试覆盖情况，识别测试缺口，制定补充计划
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">平均覆盖率</span>
+                        <span>🧪</span>
+                    </div>
+                    <div class="stat-card-value">71.0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 71%;"></div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">目标: 90%</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">总测试数</span>
+                        <span>✓</span>
+                    </div>
+                    <div class="stat-card-value">23</div>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">分布在 5 个模块</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">待补充测试</span>
+                        <span>⚠</span>
+                    </div>
+                    <div class="stat-card-value">18</div>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">关键测试场景</p>
+                </div>
+            </div>
+
+            <!-- Module Details -->
+            <div class="chart-container">
+                <h3 class="chart-title">模块详细分析</h3>
+                <p class="chart-subtitle">每个模块的测试覆盖情况和缺失测试</p>
+                
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-info">
+                            <div class="module-icon">🧪</div>
+                            <div>
+                                <h4 style="font-weight: 600;">lexer.py</h4>
+                                <p style="font-size: 0.75rem; color: #6b7280;">4 个测试</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-medium">70%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 70%;"></div>
+                    </div>
+                    <div class="missing-tests">
+                        <h5 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">缺失测试场景</h5>
+                        <div class="missing-test-item">
+                            <span>边界字符处理</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>Unicode 支持</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>超长 token</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-info">
+                            <div class="module-icon">🧪</div>
+                            <div>
+                                <h4 style="font-weight: 600;">parser.py</h4>
+                                <p style="font-size: 0.75rem; color: #6b7280;">6 个测试</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-medium">75%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%;"></div>
+                    </div>
+                    <div class="missing-tests">
+                        <h5 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">缺失测试场景</h5>
+                        <div class="missing-test-item">
+                            <span>深度嵌套表达式</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>错误恢复</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>大文件性能</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-info">
+                            <div class="module-icon">🧪</div>
+                            <div>
+                                <h4 style="font-weight: 600;">runner.py</h4>
+                                <p style="font-size: 0.75rem; color: #6b7280;">2 个测试</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-high" style="background: #fee2e2; color: #dc2626;">45%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 45%; background: var(--destructive);"></div>
+                    </div>
+                    <div class="missing-tests">
+                        <h5 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">缺失测试场景</h5>
+                        <div class="missing-test-item">
+                            <span>LLM 调用模拟</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>状态隔离</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>并发安全</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>异常处理</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-info">
+                            <div class="module-icon">🧪</div>
+                            <div>
+                                <h4 style="font-weight: 600;">validator.py</h4>
+                                <p style="font-size: 0.75rem; color: #6b7280;">5 个测试</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-medium">80%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%;"></div>
+                    </div>
+                    <div class="missing-tests">
+                        <h5 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">缺失测试场景</h5>
+                        <div class="missing-test-item">
+                            <span>成员访问类型检查</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>schema 完整性验证</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-info">
+                            <div class="module-icon">🧪</div>
+                            <div>
+                                <h4 style="font-weight: 600;">cli.py</h4>
+                                <p style="font-size: 0.75rem; color: #6b7280;">6 个测试</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-high">85%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                    <div class="missing-tests">
+                        <h5 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">缺失测试场景</h5>
+                        <div class="missing-test-item">
+                            <span>交互式模式</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                        <div class="missing-test-item">
+                            <span>管道输入</span>
+                            <button class="btn btn-outline btn-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-text">
+                © 2026 llm-flow-dsl Optimization Plan. Generated with Lingma.
+            </div>
+            <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #6b7280;">
+                <span>版本: v0.1</span>
+                <span>•</span>
+                <span>最后更新: 2026-05-02</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Tab switching
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Toggle priority section
+        function togglePriority(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('span:last-child');
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                arrow.textContent = '▼';
+            } else {
+                // Close all other sections
+                document.querySelectorAll('.priority-content').forEach(c => {
+                    c.classList.remove('expanded');
+                });
+                document.querySelectorAll('.priority-header span:last-child').forEach(a => {
+                    a.textContent = '▼';
+                });
+                
+                content.classList.add('expanded');
+                arrow.textContent = '▲';
+            }
+        }
+
+        // Toggle item details
+        function toggleDetails(button) {
+            const details = button.nextElementSibling;
+            
+            if (details.classList.contains('expanded')) {
+                details.classList.remove('expanded');
+                button.textContent = '查看详情 ▼';
+            } else {
+                details.classList.add('expanded');
+                button.textContent = '收起详情 ▲';
+            }
+        }
+    </script>
+</body>
+</html>
