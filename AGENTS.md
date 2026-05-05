@@ -16,6 +16,9 @@ See: [README.md](README.md), [product-strategy.md](docs/product-strategy.md)
 # Parse a flow file into AST (JSON)
 python -m llm_flow_dsl parse examples/support-triage.flow --pretty
 
+# Parse + validate
+python -m llm_flow_dsl parse examples/support-triage.flow --validate --pretty
+
 # Run a flow locally with dry-run mode
 python -m llm_flow_dsl run examples/support-triage.flow --input-json input.json --dry-run --pretty
 
@@ -23,19 +26,21 @@ python -m llm_flow_dsl run examples/support-triage.flow --input-json input.json 
 python -m pytest tests/test_mvp_parser.py -v
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full dev setup (fork, branch, PR process).
+
 ## Architecture
 
 ### Core Modules
 
 | Module | Responsibility |
 |--------|-----------------|
-| [lexer.py](llm_flow_dsl/lexer.py) | Tokenization: converts `.flow` source to Token stream. LexerError for syntax issues. |
-| [parser.py](llm_flow_dsl/parser.py) | AST generation: uses Pratt parser for expression precedence. ParseError with diagnostic spans. |
-| [ast_nodes.py](llm_flow_dsl/ast_nodes.py) | AST definitions: dataclasses for ExpressionNode, BlockNode. Each has a `Span` for error reporting. |
-| [runner.py](llm_flow_dsl/runner.py) | Flow execution: evaluates AST nodes, executes LLM/tool/approval blocks. RunnerError for runtime issues. |
-| [validator.py](llm_flow_dsl/validator.py) | Semantic validation: schema checks, symbol resolution, unsafe config detection. |
-| [diagnostics.py](llm_flow_dsl/diagnostics.py) | Error reporting: `Span`, `Diagnostic` with line/col context for user-friendly messages. |
-| [cli.py](llm_flow_dsl/cli.py) | CLI: parse + run subcommands with argparse; error handling and JSON output. |
+| [lexer.py](llm_flow_dsl/lexer.py) | Tokenization: converts `.flow` source to `Token` stream. Supports `//` and `#` comments. `LexerError` for syntax issues. |
+| [parser.py](llm_flow_dsl/parser.py) | AST generation: uses Pratt parser for expression precedence. `not in` is a single binary operator. `ParseError` with diagnostic spans. |
+| [ast_nodes.py](llm_flow_dsl/ast_nodes.py) | AST definitions: dataclasses for all node types. `node_to_dict()` utility converts to JSON. `LlmBlock.properties` stores raw Python values (not AST nodes). |
+| [runner.py](llm_flow_dsl/runner.py) | Flow execution: evaluates AST nodes, executes LLM/tool/approval blocks. Dry-run injects `__llm__` override for deterministic LLM output. `RunnerError` for runtime issues. |
+| [validator.py](llm_flow_dsl/validator.py) | Semantic validation: duplicate symbol checks, schema checks, undefined identifier resolution, unsafe config detection. |
+| [diagnostics.py](llm_flow_dsl/diagnostics.py) | Error reporting: `Span`, `Diagnostic` with `build_snippet()` and `make_diagnostic()` helpers for user-friendly messages with source pointers. |
+| [cli.py](llm_flow_dsl/cli.py) | CLI: `parse` + `run` subcommands with argparse; errors emitted as JSON on stderr. |
 
 ### Control Flow
 
@@ -51,7 +56,7 @@ See: [grammar-spec.md](docs/grammar-spec.md) for formal EBNF.
 
 **Blocks**: `input` (declare inputs), `llm` (LLM call with schema), `if/else` (conditional routing), `route` (pattern matching), `tool` (call external tool), `approval` (human decision), `output` (final result).
 
-**Expressions**: Member access (`.`), unary (`not`), comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in`), logical operators (`and`, `or`).
+**Expressions**: Member access (`.`), unary (`not`), comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in`, `not in`), logical operators (`and`, `or`).
 
 **Example**: [examples/support-triage.flow](examples/support-triage.flow)
 
@@ -84,10 +89,26 @@ class IfNode(Node):
     else_stmts: Optional[List[StatementNode]]
 ```
 
-### 4. Testing Patterns
+### 4. Diagnostics with Source Pointers
+Use `build_snippet()` and `make_diagnostic()` from [diagnostics.py](llm_flow_dsl/diagnostics.py) for user-friendly error messages:
+```python
+lines = source.split("\n")
+snippet = build_snippet(lines, node.span)
+diagnostic = make_diagnostic("E001", f"Unknown symbol: {name}", "error", node.span, lines)
+raise ParseError(diagnostic)
+```
+
+### 5. Deterministic Runner Tests
+Inject `__llm__` into inputs to override LLM output in dry-run mode:
+```python
+result = run_flow(flow, inputs={"__llm__": {"sentiment": "positive"}}, dry_run=True)
+```
+
+### 6. Testing Patterns
 - Parse source strings with `Lexer(source).tokenize()` then `Parser(tokens, source).parse()`.
-- Use `unittest` framework; fixtures in `tests/`.
-- Deterministic stubs for LLM/tool calls in runner tests.
+- Use `unittest` framework (single test file: `tests/test_mvp_parser.py`).
+- CLI tests use `subprocess.run` with `sys.executable -m llm_flow_dsl`.
+- No external mocking library—use `__llm__` override for deterministic LLM stubs.
 - Example: [tests/test_mvp_parser.py](tests/test_mvp_parser.py)
 
 ## Development Workflow
@@ -124,6 +145,10 @@ class IfNode(Node):
 - **File extensions**: `.flow` for DSL files.
 - **CLI**: Subcommands (`parse`, `run`) with flags like `--pretty`, `--dry-run`.
 - **Naming**: Private methods prefixed with `_`; public API documented.
+- **`not in`**: Treated as a single binary operator in parser and lexer, not two separate tokens.
+- **`LlmBlock.properties`**: Stores raw Python values (strings, dicts, lists), not AST nodes.
+- **Output**: CLI emits JSON payloads on stdout, diagnostics/errors on stderr.
+- **Comments**: Both `//` and `#` line comments supported in `.flow` files.
 
 ## Key Files at a Glance
 
@@ -147,6 +172,10 @@ docs/
   grammar-spec.md       (EBNF formal grammar)
   product-strategy.md   (business vision)
   roadmap.md            (roadmap)
+.cursor/
+  rules/
+    karpathy-guidelines.mdc (Karpathy behavioral guidelines for LLM coding)
+SKILL.md                  (Karpathy guidelines skill definition)
 ```
 
 ## When to Modify Each File
@@ -164,3 +193,8 @@ docs/
 3. **Pratt precedence is fragile**: When adding operators, carefully test associativity and precedence against expected behavior.
 4. **Deterministic tests**: Use fixtures or mocks; do not call external LLMs in CI tests.
 5. **Link, don't duplicate**: Refer to [docs/grammar-spec.md](docs/grammar-spec.md) instead of restating grammar rules.
+6. **`not in` awareness**: `not in` is a single binary operator in both lexer and parser. Do not tokenize it as two separate tokens.
+7. **`LlmBlock.properties`**: Contains raw Python values (e.g., `{"prompt": "..." , "output_schema": {...}}`), NOT AST nodes. Handle accordingly in runner and validator.
+8. **CLI stderr protocol**: All diagnostics and errors go to stderr as JSON. stdout is reserved for successful JSON payloads.
+9. **Karpathy guidelines**: The project has Karpathy behavioral guidelines in `.cursor/rules/karpathy-guidelines.mdc` and `SKILL.md`. Follow them: think before coding, keep changes surgical, define success criteria.
+10. **Single test file**: All tests live in `tests/test_mvp_parser.py` using `unittest`. Add new test classes there rather than creating separate test files.
