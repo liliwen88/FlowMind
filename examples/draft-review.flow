@@ -1,0 +1,58 @@
+// AI draft review workflow example:
+// - Reviews AI-generated drafts before publishing
+// - Uses LLM quality assessment with routing
+// - Demonstrates nested conditions and approval chains
+
+flow "draft_review_v1" {
+  input {
+    draft_text: string
+    author_name: string
+    is_guest_author: boolean
+    target_audience: string
+  }
+
+  llm assess_quality {
+    prompt: "Evaluate the quality of this draft for publication readiness."
+    output_schema: {
+      quality_score: number
+      safety_issues: string
+      factual_accuracy: string
+      requires_legal_review: boolean
+    }
+  }
+
+  if assess_quality.quality_score < 0.4 {
+    // Low quality: reject or major revision
+    if is_guest_author == true {
+      approval "guest_author_revision_approval"
+    } else {
+      tool "notify_author_for_revision"
+    }
+  } else {
+    if assess_quality.requires_legal_review == true {
+      approval "legal_team_review"
+    } else {
+      route on assess_quality.safety_issues {
+        "critical" -> approval "safety_team_immediate_review"
+        "moderate" -> approval "content_manager_review"
+        "none" -> tool "queue_for_publication"
+        default -> approval "editor_review"
+      }
+    }
+  }
+
+  if target_audience == "minors" and assess_quality.factual_accuracy != "verified" {
+    approval "youth_content_specialist_review"
+  }
+
+  if assess_quality.quality_score >= 0.8 and assess_quality.safety_issues == "none" {
+    tool "fast_track_publication"
+  }
+
+  output {
+    author: author_name
+    quality_score: assess_quality.quality_score
+    needs_legal: assess_quality.requires_legal_review
+    published: assess_quality.quality_score >= 0.4 and assess_quality.safety_issues != "critical"
+  }
+}

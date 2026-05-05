@@ -167,7 +167,15 @@ tests/
   test_mvp_parser.py    (parser + runner tests)
 examples/
   support-triage.flow   (reference example)
+  ab-routing.flow       (A/B experiment routing)
+  refund-approval.flow  (refund triage with risk gating)
+  policy-gating.flow    (region/content policy enforcement)
+  content-moderation.flow (multi-level severity moderation)
+  lead-scoring.flow     (sales lead qualification + compliance)
+  fraud-detection.flow  (transaction fraud risk assessment)
+  draft-review.flow     (AI draft quality review pipeline)
   duplicate-symbols.flow (edge case example)
+  data/                 (input JSON fixtures for dry-run)
 docs/
   grammar-spec.md       (EBNF formal grammar)
   product-strategy.md   (business vision)

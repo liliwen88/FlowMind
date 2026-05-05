@@ -1,0 +1,54 @@
+// Fraud detection example:
+// - Analyzes transactions with LLM risk assessment
+// - Multi-tier approval chain based on risk level and amount
+// - Demonstrates complex conditional logic with member access
+
+flow "fraud_detection_v1" {
+  input {
+    transaction_id: string
+    amount: number
+    user_age_days: number
+    region: string
+    previous_chargebacks: number
+  }
+
+  llm assess_risk {
+    prompt: "Assess fraud risk for this transaction based on the details."
+    output_schema: {
+      risk_level: string
+      risk_factors: string
+      confidence: number
+    }
+  }
+
+  if previous_chargebacks > 3 or amount > 10000 {
+    approval "fraud_specialist_review"
+  } else {
+    if assess_risk.confidence < 0.5 {
+      approval "manual_review"
+    } else {
+      route on assess_risk.risk_level {
+        "high" -> approval "fraud_team_approval"
+        "medium" -> tool "flag_for_review"
+        "low" -> tool "auto_approve"
+        default -> approval "risk_analyst_review"
+      }
+    }
+  }
+
+  if user_age_days < 30 and amount > 500 {
+    approval "new_user_large_transaction_review"
+  }
+
+  if assess_risk.risk_level == "high" and region not in "US" {
+    tool "notify_international_fraud_team"
+  }
+
+  output {
+    transaction_id: transaction_id
+    risk_level: assess_risk.risk_level
+    amount: amount
+    confidence: assess_risk.confidence
+    blocked: assess_risk.risk_level == "high" or amount > 10000
+  }
+}

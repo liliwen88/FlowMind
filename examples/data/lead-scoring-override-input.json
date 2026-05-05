@@ -1,0 +1,15 @@
+{
+  "company_name": "Acme Corp",
+  "industry": "healthcare",
+  "region": "US",
+  "employee_count": 500,
+  "contact_role": "CTO",
+  "__llm__": {
+    "score_lead": {
+      "lead_score": 85,
+      "interest_level": "hot",
+      "compliance_risk": "low",
+      "recommended_action": "prioritize"
+    }
+  }
+}

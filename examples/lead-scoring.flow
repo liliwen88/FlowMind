@@ -1,0 +1,57 @@
+// Lead scoring and qualification example:
+// - Evaluates inbound sales leads with LLM analysis
+// - Enforces compliance gates for regulated industries
+// - Routes leads based on score and region
+
+flow "lead_scoring_v1" {
+  input {
+    company_name: string
+    industry: string
+    region: string
+    employee_count: number
+    contact_role: string
+  }
+
+  llm score_lead {
+    prompt: "Score this sales lead based on company profile and fit."
+    output_schema: {
+      lead_score: number
+      interest_level: string
+      compliance_risk: string
+      recommended_action: string
+    }
+  }
+
+  if employee_count < 10 {
+    // Small business: route to self-serve
+    tool "route_to_self_serve"
+  } else {
+    if industry == "healthcare" or industry == "finance" {
+      // Regulated industries need compliance check
+      if score_lead.compliance_risk == "high" {
+        approval "compliance_officer_review"
+      } else {
+        tool "route_to_sales"
+      }
+    } else {
+      route on score_lead.lead_score {
+        "high" -> tool "route_to_enterprise_sales"
+        "medium" -> tool "route_to_sales"
+        "low" -> tool "route_to_nurture"
+        default -> tool "route_to_sales"
+      }
+    }
+  }
+
+  if score_lead.interest_level == "hot" and region in "US" {
+    tool "notify_sales_director"
+  }
+
+  output {
+    company: company_name
+    score: score_lead.lead_score
+    interest: score_lead.interest_level
+    compliance_risk: score_lead.compliance_risk
+    industry: industry
+  }
+}

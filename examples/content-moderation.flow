@@ -1,0 +1,50 @@
+// Content moderation example:
+// - Routes content through LLM classification
+// - Uses multi-level severity routing with approvals
+// - Demonstrates boolean conditions and route on expressions
+
+flow "content_moderation_v1" {
+  input {
+    content: string
+    author_reputation: number
+    content_type: string
+  }
+
+  llm classify_content {
+    prompt: "Analyze content and classify severity and category."
+    output_schema: {
+      severity: string
+      category: string
+      confidence: number
+      contains_pii: boolean
+    }
+  }
+
+  if classify_content.confidence < 0.6 {
+    approval "low_confidence_review"
+  } else {
+    route on classify_content.severity {
+      "critical" -> approval "content_safety_team"
+      "high" -> approval "moderator_review"
+      "medium" -> tool "auto_flag_for_review"
+      "low" -> tool "auto_approve"
+      default -> approval "unexpected_severity_review"
+    }
+  }
+
+  if classify_content.contains_pii == true and author_reputation < 50 {
+    approval "pii_data_protection_review"
+  }
+
+  if content_type == "image" and classify_content.severity not in "low" {
+    tool "queue_image_review"
+  }
+
+  output {
+    content_type: content_type
+    severity: classify_content.severity
+    category: classify_content.category
+    confidence: classify_content.confidence
+    requires_human: classify_content.confidence < 0.6 or classify_content.severity != "low"
+  }
+}

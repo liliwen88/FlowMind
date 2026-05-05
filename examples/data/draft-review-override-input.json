@@ -1,0 +1,14 @@
+{
+  "draft_text": "Article about AI safety best practices",
+  "author_name": "John Doe",
+  "is_guest_author": false,
+  "target_audience": "general",
+  "__llm__": {
+    "assess_quality": {
+      "quality_score": 0.9,
+      "safety_issues": "none",
+      "factual_accuracy": "verified",
+      "requires_legal_review": false
+    }
+  }
+}

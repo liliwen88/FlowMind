@@ -78,26 +78,100 @@ One-line pitch:
 3. Week 3: docs site + 3 industry examples.
 4. Week 4: public launch + live teardown of real user flow.
 
-## Project structure (initial)
+## Project structure
 
 ```text
 llm-flow-dsl/
   README.md
   docs/
-    product-strategy.md
-    roadmap.md
+    grammar-spec.md          (EBNF formal grammar)
+    product-strategy.md      (business vision)
+    roadmap.md               (development roadmap)
   examples/
-    support-triage.flow
+    support-triage.flow      (customer support triage + escalation)
+    ab-routing.flow          (A/B experiment routing with guardrails)
+    refund-approval.flow     (refund triage with risk gating)
+    policy-gating.flow       (region/content policy enforcement)
+    content-moderation.flow  (multi-level severity moderation)
+    lead-scoring.flow        (sales lead qualification + compliance)
+    fraud-detection.flow     (transaction fraud risk assessment)
+    draft-review.flow        (AI draft quality review pipeline)
+    duplicate-symbols.flow   (validation error demonstration)
+    data/
+      *.json                 (input fixtures for dry-run)
+  tests/
+    test_mvp_parser.py       (parser + runner + validation tests)
 ```
 
-## Quick start (placeholder)
+## Quick start
 
 ```bash
+# Parse a flow file into AST (JSON)
 python -m llm_flow_dsl parse examples/support-triage.flow --pretty
-python -m llm_flow_dsl run examples/support-triage.flow --input-json input.json --dry-run --pretty
+
+# Parse + validate (default: validation is on)
+python -m llm_flow_dsl parse examples/content-moderation.flow --pretty
+
+# Run a flow with dry-run mode (deterministic, no LLM needed)
+python -m llm_flow_dsl run examples/support-triage.flow --input-json examples/data/support-triage-input.json --dry-run --pretty
+
+# Override LLM output for deterministic testing
+python -m llm_flow_dsl run examples/fraud-detection.flow --input-json examples/data/fraud-detection-override-input.json --dry-run --pretty
+
+# Run tests
+python -m pytest tests/test_mvp_parser.py -v
 ```
 
 Grammar reference: `docs/grammar-spec.md`
+
+## Examples
+
+Each `.flow` file demonstrates a real-world AI decision workflow with business constraints.
+
+### Customer Support Triage
+`examples/support-triage.flow`
+Classify support tickets by intent and urgency. Routes to appropriate queues, escalates enterprise+high-urgency cases.  
+**DSL features**: `input`, `llm`, `if/else`, `route`, `tool`, `approval`, `output`, member access, `and`/`or` logic
+
+### A/B Routing
+`examples/ab-routing.flow`
+Route users to different LLM variants based on experiment bucket. Demonstrates `not in` guardrail for unknown buckets.  
+**DSL features**: `not in` operator, `route on` expression, guardrail approval
+
+### Refund Approval
+`examples/refund-approval.flow`
+Refund triage with fraud risk classification. Multi-tier approval based on amount and risk level.  
+**DSL features**: nested `if/else`, member access, boolean logic in output expressions
+
+### Policy Gating
+`examples/policy-gating.flow`
+Enforce region-specific content policies. Route to different pipelines based on user region and content category.  
+**DSL features**: `in`/`not in` operators, `route` with `tool`/`approval` actions
+
+### Content Moderation
+`examples/content-moderation.flow`
+Multi-level content severity routing (critical→approval, low→auto-approve). PII data protection for low-reputation authors.  
+**DSL features**: severity-based `route`, `not in` for safe categories, conditional `approval` chaining
+
+### Lead Scoring
+`examples/lead-scoring.flow`
+Qualify sales leads with LLM scoring. Compliance gates for regulated industries (healthcare/finance).  
+**DSL features**: industry-based `if/else`, score-based `route`, compliance `approval` workflow, `and` conditions
+
+### Fraud Detection
+`examples/fraud-detection.flow`
+Assess transaction fraud risk with multi-tier review. Triggers specialist approval for high-risk or large transactions.  
+**DSL features**: `approval` chains, `not in` for international routing, output expressions with `or`/`and`
+
+### Draft Review
+`examples/draft-review.flow`
+Review AI-generated drafts for quality and safety. Fast-track publication for high-quality safe content.  
+**DSL features**: nested `if/else`, `route on` safety issues, guest author workflow, conditional fast-track
+
+### Validation Error Demo
+`examples/duplicate-symbols.flow`
+Deliberately invalid flow demonstrating the validator's error detection (duplicate fields, duplicate LLM names).  
+**Purpose**: test and demonstrate semantic validation rules
 
 ## Contributing
 

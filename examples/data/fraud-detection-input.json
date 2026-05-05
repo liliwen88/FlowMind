@@ -1,0 +1,7 @@
+{
+  "transaction_id": "TXN-20260505-001",
+  "amount": 2500,
+  "user_age_days": 15,
+  "region": "US",
+  "previous_chargebacks": 1
+}

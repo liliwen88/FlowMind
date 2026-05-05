@@ -1,0 +1,13 @@
+{
+  "content": "This is a sample post with some questionable content",
+  "author_reputation": 35,
+  "content_type": "text",
+  "__llm__": {
+    "classify_content": {
+      "severity": "high",
+      "category": "hate_speech",
+      "confidence": 0.85,
+      "contains_pii": false
+    }
+  }
+}

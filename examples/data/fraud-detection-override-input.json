@@ -1,0 +1,14 @@
+{
+  "transaction_id": "TXN-001",
+  "amount": 2500,
+  "user_age_days": 15,
+  "region": "US",
+  "previous_chargebacks": 1,
+  "__llm__": {
+    "assess_risk": {
+      "risk_level": "high",
+      "risk_factors": "suspicious_pattern",
+      "confidence": 0.85
+    }
+  }
+}
